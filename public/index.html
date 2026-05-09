@@ -1,0 +1,968 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Amulya's Tracker 💉</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='85'>💉</text></svg>">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root {
+  --bg:#F0F4F8;
+  --card:#fff;
+  --primary:#6366F1;
+  --primary-l:#EEF2FF;
+  --green:#10B981;
+  --green-l:#ECFDF5;
+  --amber:#F59E0B;
+  --amber-l:#FFFBEB;
+  --purple:#8B5CF6;
+  --purple-l:#F5F3FF;
+  --red:#EF4444;
+  --red-l:#FEF2F2;
+  --blue:#3B82F6;
+  --blue-l:#EFF6FF;
+  --text:#1E293B;
+  --muted:#64748B;
+  --light:#94A3B8;
+  --border:#E2E8F0;
+  --nav-h:68px;
+  --header-h:60px;
+  --radius:14px;
+  --shadow:0 2px 8px rgba(0,0,0,0.08);
+  --shadow-lg:0 8px 24px rgba(0,0,0,0.12);
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
+}
+body{background:var(--bg);color:var(--text);min-height:100vh;overscroll-behavior:none}
+#app{max-width:430px;margin:0 auto;min-height:100vh;position:relative;background:var(--bg)}
+
+/* HEADER */
+#app-header{position:fixed;top:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;height:var(--header-h);background:var(--card);border-bottom:1px solid var(--border);z-index:100;display:flex;align-items:center;padding:0 18px;gap:12px}
+.header-avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--purple));display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.header-titles{flex:1}
+.header-name{font-size:16px;font-weight:700;color:var(--text)}
+.header-sub{font-size:12px;color:var(--muted)}
+.header-right{display:flex;gap:8px}
+.icon-btn{width:34px;height:34px;border-radius:10px;border:none;background:var(--bg);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;transition:.15s}
+.icon-btn:active{transform:scale(0.93)}
+
+/* MAIN */
+#main-content{padding-top:calc(var(--header-h) + 12px);padding-bottom:calc(var(--nav-h) + 12px);min-height:100vh}
+
+/* BOTTOM NAV */
+#bottom-nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;height:var(--nav-h);background:var(--card);border-top:1px solid var(--border);display:flex;z-index:100;padding-bottom:env(safe-area-inset-bottom)}
+.nav-btn{flex:1;border:none;background:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;color:var(--light);transition:.15s;padding:8px 4px 6px;-webkit-tap-highlight-color:transparent}
+.nav-btn .nav-icon{font-size:21px;line-height:1}
+.nav-btn .nav-label{font-size:10px;font-weight:600;letter-spacing:.3px}
+.nav-btn.active{color:var(--primary)}
+.nav-btn:active{transform:scale(0.92)}
+
+/* CARDS */
+.card{background:var(--card);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow)}
+.card-title{font-size:13px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px}
+.section{padding:0 14px 16px}
+.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.section-title{font-size:17px;font-weight:700}
+.link-btn{font-size:13px;color:var(--primary);background:none;border:none;cursor:pointer;font-weight:600;padding:4px 0}
+
+/* STAT CARDS */
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 14px 10px}
+.stat-card{background:var(--card);border-radius:var(--radius);padding:14px;box-shadow:var(--shadow)}
+.stat-icon{font-size:24px;margin-bottom:8px}
+.stat-value{font-size:22px;font-weight:800;line-height:1}
+.stat-label{font-size:12px;color:var(--muted);margin-top:3px}
+.stat-sub{font-size:11px;color:var(--light);margin-top:2px}
+
+/* PROGRESS BAR */
+.progress-wrap{background:var(--border);border-radius:99px;height:10px;overflow:hidden}
+.progress-bar{height:100%;border-radius:99px;transition:width .5s ease}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:11px 18px;border-radius:12px;border:none;font-size:14px;font-weight:600;cursor:pointer;transition:.15s;-webkit-tap-highlight-color:transparent}
+.btn:active{transform:scale(0.96)}
+.btn-primary{background:var(--primary);color:#fff}
+.btn-green{background:var(--green);color:#fff}
+.btn-ghost{background:var(--bg);color:var(--text)}
+.btn-danger{background:var(--red-l);color:var(--red)}
+.btn-sm{padding:7px 13px;font-size:13px;border-radius:9px}
+.btn-block{width:100%}
+.btn-icon{width:38px;height:38px;padding:0;border-radius:10px}
+
+/* FAB */
+.fab{position:fixed;bottom:calc(var(--nav-h) + 16px);right:calc(50% - 215px + 14px);width:52px;height:52px;border-radius:16px;box-shadow:0 4px 14px rgba(99,102,241,.45);z-index:99;font-size:24px;font-weight:300;border:none;cursor:pointer;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;transition:.15s}
+.fab:active{transform:scale(0.93)}
+@media(max-width:430px){.fab{right:14px}}
+
+/* CHIPS */
+.chip-row{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.chip{display:inline-flex;align-items:center;gap:5px;padding:5px 11px;border-radius:99px;font-size:13px;font-weight:500;border:1.5px solid var(--border);background:var(--card);cursor:pointer;transition:.15s;color:var(--text)}
+.chip.active{border-color:var(--primary);background:var(--primary-l);color:var(--primary)}
+
+/* TAGS */
+.tag{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:6px;font-size:12px;font-weight:600}
+
+/* LIST ITEMS */
+.list-item{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border)}
+.list-item:last-child{border-bottom:none}
+.list-icon{width:38px;height:38px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.list-body{flex:1;min-width:0}
+.list-title{font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.list-sub{font-size:12px;color:var(--muted);margin-top:1px}
+.list-right{text-align:right;flex-shrink:0}
+.list-amount{font-size:16px;font-weight:700}
+.list-date{font-size:11px;color:var(--light);margin-top:2px}
+.del-btn{background:none;border:none;cursor:pointer;font-size:16px;padding:4px;opacity:.4;transition:.15s;color:var(--red)}
+.del-btn:hover{opacity:1}
+
+/* MEAL ITEMS */
+.meal-block{background:var(--card);border-radius:var(--radius);margin-bottom:10px;overflow:hidden;box-shadow:var(--shadow)}
+.meal-header{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--border)}
+.meal-type-badge{padding:4px 10px;border-radius:99px;font-size:12px;font-weight:700}
+.meal-kcal{margin-left:auto;font-size:13px;color:var(--muted);font-weight:600}
+.meal-del{background:none;border:none;cursor:pointer;color:var(--light);font-size:14px;padding:2px 6px}
+.meal-items-list{padding:8px 14px}
+.meal-item-row{display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border)}
+.meal-item-row:last-child{border-bottom:none}
+.meal-item-name{font-size:14px;font-weight:500}
+.meal-item-meta{font-size:12px;color:var(--muted)}
+.add-item-row{display:flex;align-items:center;gap:8px;padding:8px 14px 12px}
+.add-item-input{flex:1;border:1.5px solid var(--border);border-radius:10px;padding:8px 12px;font-size:14px;background:var(--bg);color:var(--text);outline:none}
+.add-item-input:focus{border-color:var(--primary)}
+.add-item-input::placeholder{color:var(--light)}
+.analyzing-row{padding:8px 14px 12px;font-size:13px;color:var(--muted);display:flex;align-items:center;gap:8px}
+
+/* MACRO PILLS */
+.macro-row{display:flex;gap:8px;flex-wrap:wrap}
+.macro-pill{display:flex;flex-direction:column;align-items:center;background:var(--bg);border-radius:10px;padding:8px 12px;min-width:60px}
+.macro-val{font-size:17px;font-weight:800}
+.macro-lbl{font-size:10px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+
+/* PEARL CARDS */
+.pearl-card{background:var(--card);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);margin-bottom:10px;border-left:4px solid var(--primary)}
+.pearl-cat{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px;color:var(--muted)}
+.pearl-title{font-size:16px;font-weight:700;margin-bottom:8px}
+.pearl-content{font-size:14px;color:var(--muted);line-height:1.6}
+.pearl-emoji{font-size:28px;margin-bottom:8px}
+
+/* DAILY PEARL */
+.daily-pearl{background:linear-gradient(135deg,#6366F1,#8B5CF6);border-radius:var(--radius);padding:18px;color:#fff;margin:0 14px 14px;box-shadow:0 4px 16px rgba(99,102,241,.3)}
+.daily-pearl .pearl-cat{color:rgba(255,255,255,.7)}
+.daily-pearl .pearl-title{color:#fff;font-size:17px}
+.daily-pearl .pearl-content{color:rgba(255,255,255,.85);font-size:13px}
+
+/* CHART CONTAINER */
+.chart-wrap{position:relative;padding:4px 0}
+
+/* MODAL */
+#modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:.2s}
+#modal-overlay.open{opacity:1;pointer-events:all}
+#modal-box{background:var(--card);border-radius:20px 20px 0 0;width:100%;max-width:430px;max-height:90vh;overflow-y:auto;transform:translateY(100%);transition:transform .25s cubic-bezier(.4,0,.2,1);padding-bottom:env(safe-area-inset-bottom)}
+#modal-overlay.open #modal-box{transform:translateY(0)}
+.modal-handle{width:36px;height:4px;background:var(--border);border-radius:2px;margin:12px auto 4px}
+.modal-header{display:flex;align-items:center;justify-content:space-between;padding:8px 18px 16px}
+.modal-title{font-size:18px;font-weight:700}
+.modal-close{background:var(--bg);border:none;border-radius:8px;width:30px;height:30px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--muted)}
+.modal-body{padding:0 18px 24px}
+.form-group{margin-bottom:16px}
+.form-label{display:block;font-size:13px;font-weight:600;color:var(--muted);margin-bottom:6px}
+.form-input{width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:11px;font-size:15px;color:var(--text);background:var(--bg);outline:none;transition:.15s}
+.form-input:focus{border-color:var(--primary)}
+.form-input::placeholder{color:var(--light)}
+.emoji-grid{display:flex;flex-wrap:wrap;gap:6px}
+.emoji-opt{width:38px;height:38px;border-radius:9px;border:1.5px solid var(--border);background:var(--card);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.1s}
+.emoji-opt.selected{border-color:var(--primary);background:var(--primary-l)}
+.color-grid{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+.color-opt{width:28px;height:28px;border-radius:50%;cursor:pointer;transition:.15s;border:2.5px solid transparent}
+.color-opt.selected{border-color:#333;transform:scale(1.1)}
+.type-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.type-opt{padding:12px;border-radius:12px;border:1.5px solid var(--border);background:var(--card);text-align:center;cursor:pointer;transition:.15s}
+.type-opt.selected{border-color:var(--primary);background:var(--primary-l)}
+.type-opt .type-emoji{font-size:24px;display:block;margin-bottom:4px}
+.type-opt .type-name{font-size:13px;font-weight:600;color:var(--text)}
+
+/* TOAST */
+#toast-wrap{position:fixed;top:calc(var(--header-h) + 8px);left:50%;transform:translateX(-50%);z-index:300;display:flex;flex-direction:column;gap:6px;width:calc(100% - 28px);max-width:400px;pointer-events:none}
+.toast{background:#1E293B;color:#fff;padding:11px 16px;border-radius:12px;font-size:14px;font-weight:500;box-shadow:var(--shadow-lg);animation:slideDown .25s ease;pointer-events:all}
+.toast.success{background:#064E3B;border-left:3px solid var(--green)}
+.toast.error{background:#7F1D1D;border-left:3px solid var(--red)}
+@keyframes slideDown{from{transform:translateY(-16px);opacity:0}to{transform:translateY(0);opacity:1}}
+
+/* EMPTY STATE */
+.empty-state{text-align:center;padding:40px 20px;color:var(--muted)}
+.empty-emoji{font-size:44px;margin-bottom:12px}
+.empty-title{font-size:16px;font-weight:600;color:var(--text);margin-bottom:6px}
+.empty-sub{font-size:14px;line-height:1.5}
+
+/* SEARCH */
+.search-wrap{padding:0 14px 10px;position:relative}
+.search-input{width:100%;padding:10px 14px 10px 38px;border:1.5px solid var(--border);border-radius:12px;font-size:14px;background:var(--card);color:var(--text);outline:none}
+.search-input:focus{border-color:var(--primary)}
+.search-icon{position:absolute;left:26px;top:50%;transform:translateY(-50%);font-size:16px;pointer-events:none}
+
+/* LOADING SPINNER */
+.spinner{display:inline-block;width:16px;height:16px;border:2px solid var(--border);border-top-color:var(--primary);border-radius:50%;animation:spin .6s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* SWIPE HINT */
+.hint{font-size:12px;color:var(--light);text-align:center;padding:8px 0 4px}
+
+/* RESPONSIVE TWEAKS */
+@media(max-width:380px){.stat-grid{grid-template-columns:1fr 1fr}.stat-value{font-size:18px}}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="toast-wrap"></div>
+
+  <header id="app-header">
+    <div class="header-avatar">💉</div>
+    <div class="header-titles">
+      <div class="header-name">Hey Amulya! 👋</div>
+      <div class="header-sub" id="header-date">Loading...</div>
+    </div>
+    <div class="header-right">
+      <button class="icon-btn" onclick="openSettings()" title="Settings">⚙️</button>
+    </div>
+  </header>
+
+  <main id="main-content"></main>
+
+  <nav id="bottom-nav">
+    <button class="nav-btn active" data-tab="home" onclick="switchTab('home')">
+      <span class="nav-icon">🏠</span><span class="nav-label">Today</span>
+    </button>
+    <button class="nav-btn" data-tab="meals" onclick="switchTab('meals')">
+      <span class="nav-icon">🍽️</span><span class="nav-label">Meals</span>
+    </button>
+    <button class="nav-btn" data-tab="money" onclick="switchTab('money')">
+      <span class="nav-icon">💸</span><span class="nav-label">Money</span>
+    </button>
+    <button class="nav-btn" data-tab="pearls" onclick="switchTab('pearls')">
+      <span class="nav-icon">💎</span><span class="nav-label">Pearls</span>
+    </button>
+  </nav>
+
+  <div id="modal-overlay" onclick="e=>e.target===this&&closeModal()">
+    <div id="modal-box">
+      <div class="modal-handle"></div>
+      <div id="modal-content"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── STATE ────────────────────────────────────────────────────────────
+const S = {
+  tab: 'home',
+  today: new Date().toISOString().split('T')[0],
+  dashboard: null,
+  expenses: { items: [], categories: [], stats: null },
+  meals: { list: [], stats: null },
+  pearls: [],
+  settings: { calorie_goal: 2000, currency: '₹' },
+  pearlFilter: 'All',
+  expFilter: 'month',
+  pearlSearch: '',
+  charts: {}
+};
+
+// ─── UTILS ────────────────────────────────────────────────────────────
+const $ = id => document.getElementById(id);
+const fmtDate = d => new Date(d + 'T00:00:00').toLocaleDateString('en-IN', { day:'numeric', month:'short' });
+const fmtMoney = n => (S.settings.currency || '₹') + Number(n).toFixed(0);
+const clamp = (v, mn, mx) => Math.min(mx, Math.max(mn, v));
+
+async function api(path, opts = {}) {
+  try {
+    const r = await fetch('/api' + path, {
+      headers: { 'Content-Type': 'application/json' },
+      ...opts
+    });
+    return r.json();
+  } catch(e) {
+    console.error('API error:', path, e);
+    return null;
+  }
+}
+
+function toast(msg, type = '') {
+  const t = document.createElement('div');
+  t.className = 'toast ' + type;
+  t.textContent = msg;
+  $('toast-wrap').appendChild(t);
+  setTimeout(() => t.remove(), 3000);
+}
+
+function destroyChart(key) {
+  if (S.charts[key]) { S.charts[key].destroy(); delete S.charts[key]; }
+}
+
+// ─── MODAL ────────────────────────────────────────────────────────────
+function openModal(html) {
+  $('modal-content').innerHTML = html;
+  $('modal-overlay').classList.add('open');
+  $('modal-overlay').onclick = e => { if (e.target === $('modal-overlay')) closeModal(); };
+}
+function closeModal() {
+  $('modal-overlay').classList.remove('open');
+}
+
+// ─── TAB SWITCHING ────────────────────────────────────────────────────
+function switchTab(tab) {
+  S.tab = tab;
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+  Object.values(S.charts).forEach(c => c.destroy());
+  S.charts = {};
+  render();
+}
+
+function render() {
+  const mc = $('main-content');
+  const fab = document.querySelector('.fab');
+  if (fab) fab.remove();
+  if (S.tab === 'home') renderHome(mc);
+  else if (S.tab === 'meals') renderMeals(mc);
+  else if (S.tab === 'money') renderMoney(mc);
+  else if (S.tab === 'pearls') renderPearls(mc);
+}
+
+// ─── DATE HEADER ──────────────────────────────────────────────────────
+function setDateHeader() {
+  const now = new Date();
+  const opts = { weekday:'long', month:'long', day:'numeric' };
+  $('header-date').textContent = now.toLocaleDateString('en-IN', opts);
+}
+
+// ─── HOME VIEW ────────────────────────────────────────────────────────
+async function renderHome(el) {
+  el.innerHTML = '<div style="padding:20px 14px;color:var(--muted)">Loading...</div>';
+  const [dash] = await Promise.all([api('/dashboard')]);
+  S.dashboard = dash;
+  if (!dash) { el.innerHTML = '<div class="empty-state"><div class="empty-emoji">😵</div><div class="empty-title">Couldn\'t load data</div></div>'; return; }
+
+  const calPct = clamp(Math.round((dash.today_calories / (S.settings.calorie_goal || 2000)) * 100), 0, 100);
+  const calColor = calPct > 100 ? 'var(--red)' : calPct > 75 ? 'var(--amber)' : 'var(--green)';
+
+  const todayPearl = S.pearls[new Date().getDate() % S.pearls.length] || S.pearls[0];
+
+  el.innerHTML = `
+    <div style="height:8px"></div>
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="stat-icon">🔥</div>
+        <div class="stat-value" style="color:var(--amber)">${dash.today_calories || 0}</div>
+        <div class="stat-label">kcal today</div>
+        <div class="stat-sub">of ${S.settings.calorie_goal || 2000} goal</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">💸</div>
+        <div class="stat-value" style="color:var(--primary)">${fmtMoney(dash.today_expenses || 0)}</div>
+        <div class="stat-label">spent today</div>
+        <div class="stat-sub">${fmtMoney(dash.month_expenses || 0)} this month</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="card">
+        <div class="card-title">Calorie Progress</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+          <span style="font-size:13px;color:var(--muted)">${dash.today_calories || 0} / ${S.settings.calorie_goal || 2000} kcal</span>
+          <span style="font-size:13px;font-weight:700;color:${calColor}">${calPct}%</span>
+        </div>
+        <div class="progress-wrap">
+          <div class="progress-bar" style="width:${calPct}%;background:${calColor}"></div>
+        </div>
+        <div class="macro-row" style="margin-top:14px">
+          <div class="macro-pill"><span class="macro-val" style="color:var(--blue)">${Math.round(dash.today_protein || 0)}g</span><span class="macro-lbl">Protein</span></div>
+          <div class="macro-pill"><span class="macro-val" style="color:var(--amber)">${Math.round(dash.today_carbs || 0)}g</span><span class="macro-lbl">Carbs</span></div>
+          <div class="macro-pill"><span class="macro-val" style="color:var(--red)">${Math.round(dash.today_fat || 0)}g</span><span class="macro-lbl">Fat</span></div>
+          <div class="macro-pill"><span class="macro-val" style="color:var(--muted)">${dash.meal_count || 0}</span><span class="macro-lbl">Meals</span></div>
+        </div>
+      </div>
+    </div>
+
+    ${todayPearl ? `
+    <div class="section" style="padding-bottom:0">
+      <div class="section-header"><span class="section-title">💎 Pearl of the Day</span><button class="link-btn" onclick="switchTab('pearls')">See all</button></div>
+    </div>
+    <div class="daily-pearl" onclick="switchTab('pearls')">
+      <div class="pearl-cat">${todayPearl.category}</div>
+      <div class="pearl-title">${todayPearl.emoji} ${todayPearl.title}</div>
+      <div class="pearl-content">${todayPearl.content}</div>
+    </div>` : ''}
+
+    <div class="section">
+      <div class="section-header"><span class="section-title">Recent Expenses</span><button class="link-btn" onclick="switchTab('money')">See all</button></div>
+      <div class="card" id="recent-exp-list">
+        ${dash.recent_expenses && dash.recent_expenses.length ? dash.recent_expenses.map(e => `
+          <div class="list-item">
+            <div class="list-icon" style="background:${e.category_color}22">${e.category_emoji}</div>
+            <div class="list-body">
+              <div class="list-title">${e.description || e.category_name}</div>
+              <div class="list-sub">${e.category_name} · ${fmtDate(e.date)}</div>
+            </div>
+            <div class="list-right">
+              <div class="list-amount">${fmtMoney(e.amount)}</div>
+            </div>
+          </div>`).join('') : '<div class="empty-state" style="padding:20px"><div class="empty-emoji">💰</div><div class="empty-sub">No expenses yet</div></div>'}
+      </div>
+    </div>
+
+    <div style="height:4px"></div>
+  `;
+}
+
+// ─── MEALS VIEW ───────────────────────────────────────────────────────
+async function renderMeals(el) {
+  el.innerHTML = '<div style="padding:20px 14px;color:var(--muted)">Loading...</div>';
+  const [meals, stats] = await Promise.all([api('/meals?date=' + S.today), api('/meals/stats')]);
+  S.meals = { list: meals || [], stats };
+
+  const cal = stats?.today?.calories || 0;
+  const goal = stats?.calorie_goal || S.settings.calorie_goal || 2000;
+  const calPct = clamp(Math.round((cal / goal) * 100), 0, 100);
+  const calColor = calPct > 100 ? 'var(--red)' : calPct > 75 ? 'var(--amber)' : 'var(--green)';
+
+  const mealTypes = ['breakfast', 'lunch', 'dinner', 'snack'];
+  const mealMeta = {
+    breakfast: { emoji: '🌅', label: 'Breakfast', color: '#F59E0B', bg: '#FFFBEB' },
+    lunch:     { emoji: '☀️', label: 'Lunch',     color: '#10B981', bg: '#ECFDF5' },
+    dinner:    { emoji: '🌙', label: 'Dinner',    color: '#6366F1', bg: '#EEF2FF' },
+    snack:     { emoji: '🍎', label: 'Snack',     color: '#EF4444', bg: '#FEF2F2' }
+  };
+
+  let mealsHtml = '';
+  const loggedTypes = new Set(S.meals.list.map(m => m.type));
+
+  for (const type of mealTypes) {
+    const meal = S.meals.list.find(m => m.type === type);
+    const meta = mealMeta[type];
+    if (meal) {
+      mealsHtml += `
+        <div class="meal-block" id="meal-${meal.id}">
+          <div class="meal-header">
+            <span style="font-size:20px">${meta.emoji}</span>
+            <span class="meal-type-badge" style="background:${meta.bg};color:${meta.color}">${meta.label}</span>
+            <span class="meal-kcal">${meal.total_calories} kcal</span>
+            <button class="meal-del" onclick="deleteMeal(${meal.id})">🗑️</button>
+          </div>
+          <div class="meal-items-list" id="items-${meal.id}">
+            ${(meal.items || []).map(i => `
+              <div class="meal-item-row" id="mitem-${i.id}">
+                <div>
+                  <div class="meal-item-name">${i.name}</div>
+                  <div class="meal-item-meta">${i.calories} kcal · P:${Math.round(i.protein)}g C:${Math.round(i.carbs)}g F:${Math.round(i.fat)}g · ${i.serving}</div>
+                </div>
+                <button class="del-btn" onclick="deleteMealItem(${i.id},${meal.id})">✕</button>
+              </div>`).join('')}
+          </div>
+          <div class="add-item-row">
+            <input class="add-item-input" id="item-input-${meal.id}" placeholder="Add food item (e.g. 2 rotis, dal)" onkeydown="e=>e.key==='Enter'&&addMealItem(${meal.id})">
+            <button class="btn btn-green btn-sm" onclick="addMealItem(${meal.id})">+Add</button>
+          </div>
+        </div>`;
+    }
+  }
+
+  el.innerHTML = `
+    <div style="height:8px"></div>
+    <div class="section">
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+          <span style="font-size:15px;font-weight:700">Today's Calories</span>
+          <span style="font-size:14px;font-weight:700;color:${calColor}">${cal} / ${goal}</span>
+        </div>
+        <div class="progress-wrap" style="height:12px">
+          <div class="progress-bar" style="width:${calPct}%;background:${calColor}"></div>
+        </div>
+        <div class="macro-row" style="margin-top:12px">
+          <div class="macro-pill"><span class="macro-val" style="color:var(--blue)">${Math.round(stats?.today?.protein||0)}g</span><span class="macro-lbl">Protein</span></div>
+          <div class="macro-pill"><span class="macro-val" style="color:var(--amber)">${Math.round(stats?.today?.carbs||0)}g</span><span class="macro-lbl">Carbs</span></div>
+          <div class="macro-pill"><span class="macro-val" style="color:var(--red)">${Math.round(stats?.today?.fat||0)}g</span><span class="macro-lbl">Fat</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-header">
+        <span class="section-title">Today's Meals</span>
+        <button class="btn btn-primary btn-sm" onclick="openAddMealModal()">+ Log Meal</button>
+      </div>
+      ${mealsHtml || '<div class="empty-state"><div class="empty-emoji">🍽️</div><div class="empty-title">No meals logged yet</div><div class="empty-sub">Start by logging breakfast</div></div>'}
+    </div>
+
+    ${stats?.last_7_days?.length ? `
+    <div class="section">
+      <div class="card">
+        <div class="card-title">7-Day Calories</div>
+        <div class="chart-wrap" style="height:160px">
+          <canvas id="cal-chart"></canvas>
+        </div>
+      </div>
+    </div>` : ''}
+    <div style="height:4px"></div>
+  `;
+
+  if (stats?.last_7_days?.length) {
+    setTimeout(() => {
+      const ctx = document.getElementById('cal-chart');
+      if (!ctx) return;
+      destroyChart('cal');
+      S.charts.cal = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: stats.last_7_days.map(d => fmtDate(d.date)),
+          datasets: [{ data: stats.last_7_days.map(d => d.calories), backgroundColor: '#10B98133', borderColor: '#10B981', borderRadius: 6, borderWidth: 2 }]
+        },
+        options: { responsive:true, maintainAspectRatio:false, plugins:{ legend:{display:false} }, scales:{ y:{ beginAtZero:true, grid:{ color:'#E2E8F0' }, ticks:{ font:{size:10} } }, x:{ grid:{display:false}, ticks:{font:{size:10}} } } }
+      });
+    }, 50);
+  }
+}
+
+// ─── ADD MEAL MODAL ───────────────────────────────────────────────────
+function openAddMealModal() {
+  openModal(`
+    <div class="modal-header">
+      <span class="modal-title">Log a Meal</span>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group"><div class="form-label">Meal Type</div>
+        <div class="type-grid">
+          ${[['breakfast','🌅','Breakfast'],['lunch','☀️','Lunch'],['dinner','🌙','Dinner'],['snack','🍎','Snack']].map(([v,e,l]) =>
+            `<div class="type-opt" data-val="${v}" onclick="selectMealType('${v}')"><span class="type-emoji">${e}</span><span class="type-name">${l}</span></div>`
+          ).join('')}
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Notes (optional)</label>
+        <input class="form-input" id="meal-notes" placeholder="e.g. Home cooked">
+      </div>
+      <button class="btn btn-primary btn-block" onclick="submitAddMeal()">Log Meal</button>
+    </div>
+  `);
+}
+
+function selectMealType(val) {
+  document.querySelectorAll('.type-opt').forEach(el => el.classList.toggle('selected', el.dataset.val === val));
+}
+
+async function submitAddMeal() {
+  const typeEl = document.querySelector('.type-opt.selected');
+  if (!typeEl) { toast('Please select a meal type', 'error'); return; }
+  const notes = $('meal-notes')?.value || '';
+  const result = await api('/meals', { method:'POST', body: JSON.stringify({ type: typeEl.dataset.val, notes, date: S.today }) });
+  if (result?.id) {
+    toast('Meal logged! Now add your food items 🍽️', 'success');
+    closeModal();
+    switchTab('meals');
+  }
+}
+
+async function addMealItem(mealId) {
+  const input = $(`item-input-${mealId}`);
+  const food = input?.value?.trim();
+  if (!food) return;
+
+  input.disabled = true;
+  input.placeholder = 'Analyzing with Claude AI...';
+
+  const listEl = $(`items-${mealId}`);
+  const loadRow = document.createElement('div');
+  loadRow.className = 'analyzing-row';
+  loadRow.innerHTML = '<div class="spinner"></div> Fetching nutrition info...';
+  listEl.appendChild(loadRow);
+
+  try {
+    const nutrition = await api('/ai/analyze-food', { method:'POST', body: JSON.stringify({ food }) });
+    loadRow.remove();
+    if (!nutrition) throw new Error('no data');
+
+    const item = await api(`/meals/${mealId}/items`, { method:'POST', body: JSON.stringify({ ...nutrition, name: nutrition.name || food }) });
+    if (item?.id) {
+      const row = document.createElement('div');
+      row.className = 'meal-item-row';
+      row.id = `mitem-${item.id}`;
+      row.innerHTML = `
+        <div>
+          <div class="meal-item-name">${item.name}</div>
+          <div class="meal-item-meta">${item.calories} kcal · P:${Math.round(item.protein)}g C:${Math.round(item.carbs)}g F:${Math.round(item.fat)}g · ${item.serving}</div>
+        </div>
+        <button class="del-btn" onclick="deleteMealItem(${item.id},${mealId})">✕</button>`;
+      listEl.appendChild(row);
+
+      // Update meal kcal badge
+      const mealEl = $(`meal-${mealId}`);
+      if (mealEl) {
+        const stats = await api('/meals/stats');
+        const updated = await api('/meals?date=' + S.today);
+        const thisMeal = updated?.find(m => m.id === mealId);
+        const kcalBadge = mealEl.querySelector('.meal-kcal');
+        if (kcalBadge && thisMeal) kcalBadge.textContent = thisMeal.total_calories + ' kcal';
+
+        // Update header progress
+        const calEl = document.querySelector('#main-content .card');
+      }
+      toast(`${item.name}: ${item.calories} kcal added`, 'success');
+    }
+  } catch(e) {
+    loadRow.remove();
+    toast('Could not analyze food item', 'error');
+  }
+
+  input.value = '';
+  input.disabled = false;
+  input.placeholder = 'Add food item (e.g. 2 rotis, dal)';
+}
+
+async function deleteMeal(id) {
+  await api('/meals/' + id, { method:'DELETE' });
+  toast('Meal removed');
+  switchTab('meals');
+}
+
+async function deleteMealItem(itemId, mealId) {
+  await api('/meals/items/' + itemId, { method:'DELETE' });
+  const row = $('mitem-' + itemId);
+  if (row) row.remove();
+  toast('Food item removed');
+}
+
+// ─── MONEY VIEW ───────────────────────────────────────────────────────
+async function renderMoney(el) {
+  el.innerHTML = '<div style="padding:20px 14px;color:var(--muted)">Loading...</div>';
+  const [cats, stats, expenses] = await Promise.all([
+    api('/expenses/categories'),
+    api('/expenses/stats'),
+    api('/expenses?limit=30')
+  ]);
+  S.expenses = { categories: cats || [], stats, items: expenses || [] };
+
+  const monthTotal = stats?.month_total || 0;
+  const todayTotal = stats?.today_total || 0;
+
+  // FAB
+  const fab = document.createElement('button');
+  fab.className = 'fab';
+  fab.innerHTML = '+';
+  fab.onclick = openAddExpenseModal;
+  document.getElementById('app').appendChild(fab);
+
+  const catColors = (stats?.by_category || []).filter(c => c.total > 0);
+
+  el.innerHTML = `
+    <div style="height:8px"></div>
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="stat-icon">📅</div>
+        <div class="stat-value" style="color:var(--primary)">${fmtMoney(monthTotal)}</div>
+        <div class="stat-label">This month</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">📆</div>
+        <div class="stat-value" style="color:var(--amber)">${fmtMoney(todayTotal)}</div>
+        <div class="stat-label">Today</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-header">
+        <span class="section-title">Categories</span>
+        <button class="link-btn" onclick="openAddCatModal()">+ Add</button>
+      </div>
+      <div style="display:flex;gap:8px;overflow-x:auto;padding-bottom:8px;scrollbar-width:none">
+        ${(cats || []).map(c => `
+          <div style="flex-shrink:0;background:var(--card);border-radius:12px;padding:12px 14px;min-width:110px;box-shadow:var(--shadow);cursor:pointer" onclick="filterByCategory(${c.id})">
+            <div style="font-size:22px;margin-bottom:4px">${c.emoji}</div>
+            <div style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:90px">${c.name}</div>
+            <div style="font-size:13px;font-weight:700;color:${c.color};margin-top:2px">${fmtMoney(c.total_spent || 0)}</div>
+          </div>`).join('')}
+      </div>
+    </div>
+
+    ${catColors.length ? `
+    <div class="section">
+      <div class="card">
+        <div class="card-title">Spending Breakdown (this month)</div>
+        <div class="chart-wrap" style="height:200px">
+          <canvas id="pie-chart"></canvas>
+        </div>
+      </div>
+    </div>` : ''}
+
+    ${stats?.last_7_days?.length ? `
+    <div class="section">
+      <div class="card">
+        <div class="card-title">Last 7 Days</div>
+        <div class="chart-wrap" style="height:150px">
+          <canvas id="bar-chart"></canvas>
+        </div>
+      </div>
+    </div>` : ''}
+
+    <div class="section">
+      <div class="section-header">
+        <span class="section-title">Transactions</span>
+      </div>
+      <div class="card" id="exp-list">
+        ${renderExpenseList(expenses || [])}
+      </div>
+    </div>
+    <div style="height:4px"></div>
+  `;
+
+  setTimeout(() => {
+    if (catColors.length) {
+      const pctx = document.getElementById('pie-chart');
+      if (pctx) {
+        destroyChart('pie');
+        S.charts.pie = new Chart(pctx, {
+          type: 'doughnut',
+          data: {
+            labels: catColors.map(c => c.emoji + ' ' + c.name),
+            datasets: [{ data: catColors.map(c => c.total), backgroundColor: catColors.map(c => c.color + 'CC'), borderWidth: 0 }]
+          },
+          options: { responsive:true, maintainAspectRatio:false, cutout:'65%', plugins:{ legend:{ position:'bottom', labels:{ boxWidth:10, font:{size:11} } } } }
+        });
+      }
+    }
+    if (stats?.last_7_days?.length) {
+      const bctx = document.getElementById('bar-chart');
+      if (bctx) {
+        destroyChart('bar');
+        S.charts.bar = new Chart(bctx, {
+          type: 'bar',
+          data: {
+            labels: stats.last_7_days.map(d => fmtDate(d.date)),
+            datasets: [{ data: stats.last_7_days.map(d => d.total), backgroundColor: '#6366F133', borderColor: '#6366F1', borderRadius:6, borderWidth:2 }]
+          },
+          options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{ y:{beginAtZero:true,grid:{color:'#E2E8F0'},ticks:{font:{size:10},callback:v=>S.settings.currency+v}}, x:{grid:{display:false},ticks:{font:{size:10}}} } }
+        });
+      }
+    }
+  }, 50);
+}
+
+function renderExpenseList(items) {
+  if (!items.length) return '<div class="empty-state" style="padding:20px"><div class="empty-emoji">🧾</div><div class="empty-sub">No expenses yet. Tap + to add one.</div></div>';
+  return items.map(e => `
+    <div class="list-item" id="exp-${e.id}">
+      <div class="list-icon" style="background:${e.category_color}22">${e.category_emoji}</div>
+      <div class="list-body">
+        <div class="list-title">${e.description || e.category_name}</div>
+        <div class="list-sub">${e.category_name} · ${fmtDate(e.date)}</div>
+      </div>
+      <div class="list-right">
+        <div class="list-amount" style="color:var(--red)">${fmtMoney(e.amount)}</div>
+        <button class="del-btn" onclick="deleteExpense(${e.id})">✕</button>
+      </div>
+    </div>`).join('');
+}
+
+function filterByCategory(catId) {
+  // Future: filter the expense list
+}
+
+// ─── ADD EXPENSE MODAL ────────────────────────────────────────────────
+function openAddExpenseModal() {
+  const cats = S.expenses.categories || [];
+  openModal(`
+    <div class="modal-header">
+      <span class="modal-title">Add Expense</span>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Category</label>
+        <select class="form-input" id="exp-cat">
+          ${cats.map(c => `<option value="${c.id}">${c.emoji} ${c.name}</option>`).join('')}
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Amount (${S.settings.currency || '₹'})</label>
+        <input class="form-input" id="exp-amount" type="number" placeholder="0" inputmode="decimal" step="0.01">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Description (optional)</label>
+        <input class="form-input" id="exp-desc" placeholder="e.g. Lunch at canteen">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Date</label>
+        <input class="form-input" id="exp-date" type="date" value="${S.today}">
+      </div>
+      <button class="btn btn-primary btn-block" onclick="submitAddExpense()">Save Expense</button>
+    </div>
+  `);
+  setTimeout(() => $('exp-amount')?.focus(), 100);
+}
+
+async function submitAddExpense() {
+  const cat = $('exp-cat')?.value;
+  const amount = parseFloat($('exp-amount')?.value);
+  const desc = $('exp-desc')?.value?.trim();
+  const date = $('exp-date')?.value || S.today;
+  if (!cat || !amount || amount <= 0) { toast('Please fill category and amount', 'error'); return; }
+  const result = await api('/expenses', { method:'POST', body: JSON.stringify({ category_id: cat, amount, description: desc, date }) });
+  if (result?.id) { toast('Expense saved! 💸', 'success'); closeModal(); switchTab('money'); }
+}
+
+async function deleteExpense(id) {
+  await api('/expenses/' + id, { method:'DELETE' });
+  const row = $('exp-' + id);
+  if (row) row.remove();
+  toast('Expense deleted');
+}
+
+// ─── ADD CATEGORY MODAL ───────────────────────────────────────────────
+const CAT_EMOJIS = ['🍜','🚌','🛒','💊','🎬','💡','👗','✈️','📚','🎮','🏥','🧴','☕','🍕','🎁','💪','🏠','🐾','🌱','💻'];
+const CAT_COLORS = ['#EF4444','#F59E0B','#10B981','#3B82F6','#8B5CF6','#EC4899','#14B8A6','#F97316','#6366F1','#06B6D4'];
+
+function openAddCatModal() {
+  openModal(`
+    <div class="modal-header">
+      <span class="modal-title">New Category</span>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Name</label>
+        <input class="form-input" id="cat-name" placeholder="e.g. Coffee & Snacks">
+      </div>
+      <div class="form-group">
+        <div class="form-label">Icon</div>
+        <div class="emoji-grid">${CAT_EMOJIS.map((e,i) => `<div class="emoji-opt${i===0?' selected':''}" onclick="selectEmoji(this,'${e}')" data-val="${e}">${e}</div>`).join('')}</div>
+      </div>
+      <div class="form-group">
+        <div class="form-label">Color</div>
+        <div class="color-grid">${CAT_COLORS.map((c,i) => `<div class="color-opt${i===0?' selected':''}" onclick="selectColor(this,'${c}')" data-val="${c}" style="background:${c}"></div>`).join('')}</div>
+      </div>
+      <button class="btn btn-primary btn-block" onclick="submitAddCategory()">Create Category</button>
+    </div>
+  `);
+  setTimeout(() => $('cat-name')?.focus(), 100);
+}
+
+function selectEmoji(el, val) {
+  document.querySelectorAll('.emoji-opt').forEach(e => e.classList.remove('selected'));
+  el.classList.add('selected');
+}
+function selectColor(el, val) {
+  document.querySelectorAll('.color-opt').forEach(e => e.classList.remove('selected'));
+  el.classList.add('selected');
+}
+async function submitAddCategory() {
+  const name = $('cat-name')?.value?.trim();
+  const emoji = document.querySelector('.emoji-opt.selected')?.dataset.val || '💰';
+  const color = document.querySelector('.color-opt.selected')?.dataset.val || '#6366F1';
+  if (!name) { toast('Please enter a category name', 'error'); return; }
+  const result = await api('/expenses/categories', { method:'POST', body: JSON.stringify({ name, emoji, color }) });
+  if (result?.id) { toast('Category created! 🎉', 'success'); closeModal(); switchTab('money'); }
+}
+
+// ─── PEARLS VIEW ──────────────────────────────────────────────────────
+async function renderPearls(el) {
+  if (!S.pearls.length) {
+    const p = await api('/pearls');
+    S.pearls = p || [];
+  }
+  const cats = ['All', ...new Set(S.pearls.map(p => p.category))];
+  const filtered = S.pearlFilter === 'All'
+    ? S.pearls
+    : S.pearls.filter(p => p.category === S.pearlFilter);
+
+  const searched = S.pearlSearch
+    ? filtered.filter(p => p.title.toLowerCase().includes(S.pearlSearch.toLowerCase()) || p.content.toLowerCase().includes(S.pearlSearch.toLowerCase()))
+    : filtered;
+
+  el.innerHTML = `
+    <div style="height:8px"></div>
+    <div class="search-wrap">
+      <span class="search-icon">🔍</span>
+      <input class="search-input" id="pearl-search" placeholder="Search pearls..." value="${S.pearlSearch}" oninput="onPearlSearch(this.value)">
+    </div>
+    <div style="padding:0 14px 10px;overflow-x:auto;white-space:nowrap;scrollbar-width:none">
+      ${cats.map(c => `<span class="chip${S.pearlFilter===c?' active':''}" onclick="filterPearl('${c}')" style="margin-right:6px">${c}</span>`).join('')}
+    </div>
+    <div class="section" style="padding-bottom:0">
+      <div class="hint">${searched.length} pearl${searched.length !== 1 ? 's' : ''} · Tap to expand</div>
+    </div>
+    <div style="padding:0 14px 16px">
+      ${searched.length ? searched.map(p => `
+        <div class="pearl-card" style="border-left-color:${p.color}" onclick="togglePearl(this)">
+          <div class="pearl-cat" style="color:${p.color}">${p.category}</div>
+          <div class="pearl-title">${p.emoji} ${p.title}</div>
+          <div class="pearl-content pearl-collapsed">${p.content}</div>
+        </div>`).join('') : '<div class="empty-state"><div class="empty-emoji">🔍</div><div class="empty-title">No results</div></div>'}
+    </div>
+  `;
+}
+
+function togglePearl(el) {
+  const c = el.querySelector('.pearl-content');
+  c.classList.toggle('pearl-collapsed');
+}
+
+function filterPearl(cat) {
+  S.pearlFilter = cat;
+  renderPearls($('main-content'));
+}
+
+function onPearlSearch(val) {
+  S.pearlSearch = val;
+  clearTimeout(S._searchTimer);
+  S._searchTimer = setTimeout(() => renderPearls($('main-content')), 250);
+}
+
+// ─── SETTINGS MODAL ───────────────────────────────────────────────────
+function openSettings() {
+  openModal(`
+    <div class="modal-header">
+      <span class="modal-title">Settings ⚙️</span>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Daily Calorie Goal</label>
+        <input class="form-input" id="s-cal" type="number" value="${S.settings.calorie_goal || 2000}" placeholder="2000">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Currency Symbol</label>
+        <input class="form-input" id="s-cur" value="${S.settings.currency || '₹'}" placeholder="₹">
+      </div>
+      <button class="btn btn-primary btn-block" onclick="saveSettings()">Save</button>
+      <div style="height:12px"></div>
+      <div style="font-size:12px;color:var(--light);text-align:center">💉 One shot at a time<br>Built for Dr. Amulya</div>
+    </div>
+  `);
+}
+
+async function saveSettings() {
+  const cal = parseInt($('s-cal')?.value);
+  const cur = $('s-cur')?.value?.trim() || '₹';
+  if (cal && cal > 0) S.settings.calorie_goal = cal;
+  S.settings.currency = cur;
+  await api('/settings', { method:'PUT', body: JSON.stringify({ calorie_goal: cal, currency: cur }) });
+  toast('Settings saved!', 'success');
+  closeModal();
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────────
+async function init() {
+  setDateHeader();
+  const [settings, pearls] = await Promise.all([api('/settings'), api('/pearls')]);
+  if (settings) S.settings = { ...S.settings, ...settings };
+  if (pearls) S.pearls = pearls;
+  render();
+}
+
+// Pearl collapsed style
+const style = document.createElement('style');
+style.textContent = `.pearl-collapsed{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}`;
+document.head.appendChild(style);
+
+init();
+</script>
+</body>
+</html>
